@@ -2,9 +2,11 @@
  * @Author: JosieHong
  * @Date: 2021-01-30 15:54:39
  * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-01-30 23:24:56
+ * @LastEditTime: 2021-02-01 01:19:55
 -->
-# KITTI_Seg pytorch
+# KittiSeg_Pytorch
+
+This is an improved [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg) of Pytorch. 
 
 ## Set Up
 
@@ -17,6 +19,8 @@ source enb/bin/activate
 # install pytorch for Linux, CUDA=10.1
 pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 # more details could be found: https://pytorch.org/get-started/locally/
+
+pip install tqdm opencv-python
 ```
 
 2. Download KITTI road dataset: http://www.cvlibs.net/download.php?file=data_road.zip
@@ -36,5 +40,5 @@ pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f htt
 ## Train
 
 ```bash
-python train.py --dataset ./data/data_road/ --batchSize 1
+CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 1 --model ./checkpoints/model_11.pth
 ```

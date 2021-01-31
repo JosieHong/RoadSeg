@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 16:11:05
 LastEditAuthor: JosieHong
-LastEditTime: 2021-01-30 23:42:37
+LastEditTime: 2021-01-31 20:23:18
 Reference: https://github.com/hlwang1124/SNE-RoadSeg/blob/master/data/kitti_dataset.py
 '''
 import os.path
@@ -26,7 +26,8 @@ class KITTI_Dataset(Base_Dataset):
         if self.mode == "train":
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
         elif self.mode == "val":
-            self.image_list = sorted(glob.glob(os.path.join(self.root, 'validation', 'image_2', '*.png')))
+            # self.image_list = sorted(glob.glob(os.path.join(self.root, 'validation', 'image_2', '*.png')))
+            self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
         else:
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'testing', 'image_2', '*.png')))
 
@@ -54,7 +55,7 @@ class KITTI_Dataset(Base_Dataset):
         label[label > 0] = 1
         label = torch.from_numpy(label)
         label = label.type(torch.LongTensor)
-
+        
         # return a dictionary containing useful information
         # 'rgb image' and 'label' for training
         # 'path': image name for saving predictions

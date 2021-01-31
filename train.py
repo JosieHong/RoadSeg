@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 15:59:44
 LastEditAuthor: JosieHong
-LastEditTime: 2021-01-31 12:12:59
+LastEditTime: 2021-02-01 01:05:29
 '''
 import argparse
 import os
@@ -12,16 +12,16 @@ import torch
 import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
-import torch.utils.data
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets.kitti_dataset import KITTI_Dataset
-from model.kitti_seg import Kitti_Seg, weight_init
+from models.kitti_seg import Kitti_Seg, weight_init
 from utils import mask_iou
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--batchSize', type=int, default=32, help='input batch size')
+    '--batchSize', type=int, default=2, help='input batch size')
 parser.add_argument(
     '--workers', type=int, default=4, help='number of data loading workers')
 parser.add_argument(
@@ -50,19 +50,19 @@ if opt.dataset_type == 'kitti':
 
     test_dataset = KITTI_Dataset(
         root=opt.dataset,
-        mode='test',
+        mode='val',
         no_label = True,
         img_size=(256,256))
 else:
     exit('wrong dataset type')
 
-dataloader = torch.utils.data.DataLoader(
+dataloader = DataLoader(
     dataset,
     batch_size=opt.batchSize,
     shuffle=True,
     num_workers=int(opt.workers),
     drop_last=True)
-testdataloader = torch.utils.data.DataLoader(
+testdataloader = DataLoader(
     test_dataset,
     batch_size=opt.batchSize,
     shuffle=True,
@@ -85,8 +85,8 @@ if opt.model != '':
     seg_model.load_state_dict(torch.load(opt.model))
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(seg_model.parameters(), lr=0.0001, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+optimizer = optim.Adam(seg_model.parameters(), lr=0.00001, betas=(0.9, 0.999))
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=6, gamma=0.1)
 seg_model.cuda()
 
 num_batch = len(dataset) / opt.batchSize
@@ -103,14 +103,13 @@ for epoch in range(opt.nepoch):
         optimizer.zero_grad()
         seg_model = seg_model.train()
         pred = seg_model(rgb_image) # torch.Size([batch_size, oriWidth, oriHeight])
-        
         loss = criterion(pred, target)
         loss.backward()
         optimizer.step()
         acc = mask_iou(pred.detach(), target.detach())
         print('[%d: %d/%d] train loss: %f accuracy: %f' % (epoch, i, num_batch, loss.item(), acc))
 
-        if i % 100 == 0:
+        if i % 12 == 0:
             j, data = next(enumerate(testdataloader, 0))
             rgb_image = data['rgb_image']
             target = data['label']
@@ -139,7 +138,7 @@ for i, data in tqdm(enumerate(testdataloader, 0)):
         pred = seg_model(rgb_image)
     acc = mask_iou(pred.detach(), target.detach())
     accuracy += acc
-    results.append({"target": target.tolist(), "pred": pred.tolist(), "accuracy": acc})
+    results.append({"target": target.tolist(), "pred": pred.tolist()})
 print("final accuracy {}".format(accuracy/len(testdataloader)))
 
 with open(os.path.join(opt.outf, "test_results.json"), "w") as json_file:
