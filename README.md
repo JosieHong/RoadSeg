@@ -1,12 +1,6 @@
-<!--
- * @Author: JosieHong
- * @Date: 2021-01-30 15:54:39
- * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-02-01 17:22:08
--->
 # RoadSeg_Pytorch
 
-This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). 
+This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). The detailed network structure is shown in the following figure. 
 
 <div align="center">
 	<img src="./img/network_structure.png" alt="network_structure" width="700">
@@ -29,10 +23,12 @@ pip install tqdm opencv-python
 
 2. Download KITTI road dataset: http://www.cvlibs.net/download.php?file=data_road.zip
 
+The dataset structure is shown below. Because it does not provide the ground-truth of testing data, we only use the training data. When loading the dataset, we split training data into three subsets: a) training (173 images), b) validation (58 images), and c) testing (58 images). 
+
 ```bash
 |_data
     |_data_road
-        |_train
+        |_training
         |   |_calib
         |   |_image_2
         |   |_gt_image_2
@@ -47,4 +43,9 @@ pip install tqdm opencv-python
 CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_23.pth
 ```
 
-Epoch 24 glob acc : 0.880, pre : 0.732, recall : 0.199, F_score : 0.313, IoU : 0.185
+## Performance
+
+Epoch 24 glob acc : 0.913, pre : 0.953, recall : 0.370, F_score : 0.533, IoU : 0.69
+Epoch 48 glob acc : 0.922, pre : 0.931, recall : 0.453, F_score : 0.610, IoU : 0.79
+Epoch 72 glob acc : 0.926, pre : 0.934, recall : 0.486, F_score : 0.639, IoU : 0.79
+Epoch 96 glob acc : 0.926, pre : 0.938, recall : 0.475, F_score : 0.631, IoU : 0.79

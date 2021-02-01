@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 16:11:05
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 13:08:37
+LastEditTime: 2021-02-01 18:01:54
 Reference: https://github.com/hlwang1124/SNE-RoadSeg/blob/master/data/kitti_dataset.py
 '''
 import os.path
@@ -23,19 +23,21 @@ class KITTI_Dataset(Base_Dataset):
         self.num_labels = 2
         self.use_size = (img_size[0], img_size[1])
         
+        # split the training data into 'training', 'validation' and 'testing'
         if self.mode == "train":
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
-            # split the training data into 'training' and 'validation'
             length = len(self.image_list)
-            self.image_list = self.image_list[:int(length*0.9)]
+            self.image_list = self.image_list[:int(length*0.6)]
         elif self.mode == "val":
             # self.image_list = sorted(glob.glob(os.path.join(self.root, 'validation', 'image_2', '*.png')))
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
-            # split the training data into 'training' and 'validation'
             length = len(self.image_list)
-            self.image_list = self.image_list[int(length*0.9):]
+            self.image_list = self.image_list[int(length*0.6):int(length*0.8)]
         else:
-            self.image_list = sorted(glob.glob(os.path.join(self.root, 'testing', 'image_2', '*.png')))
+            # self.image_list = sorted(glob.glob(os.path.join(self.root, 'testing', 'image_2', '*.png')))
+            self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
+            length = len(self.image_list)
+            self.image_list = self.image_list[int(length*0.8):]
 
     def __getitem__(self, index):
         useDir = "/".join(self.image_list[index].split('/')[:-2])

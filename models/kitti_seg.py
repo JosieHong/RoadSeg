@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 20:36:09
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 17:56:12
+LastEditTime: 2021-02-01 23:46:48
 '''
 import torch.nn as nn
 from torchvision import models
@@ -63,7 +63,7 @@ class Kitti_Seg(nn.Module):
         self.fusion1 = Fusion_Module(2048, 1024)
         self.fusion2 = Fusion_Module(1024, 512)
         self.fusion3 = Fusion_Module(512, 256)
-        self.fusion4 = Fusion_Module(256, 64, t_stride=(1,1), t_kernel=3, t_padding=(1, 1))
+        self.fusion4 = Fusion_Module(256, 64, t_stride=(1,1), t_kernel=3, t_padding=(1,1))
         self.trans_conv = nn.ConvTranspose2d(64, 1, stride=(4,4), kernel_size=16, padding=(6,6)) # Yuhui: not sure about the parameter of this layer
         self.bn = nn.BatchNorm2d(1)
         self.relu = nn.ReLU(inplace=True)
