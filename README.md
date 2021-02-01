@@ -2,7 +2,7 @@
  * @Author: JosieHong
  * @Date: 2021-01-30 15:54:39
  * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-02-01 01:19:55
+ * @LastEditTime: 2021-02-01 13:33:22
 -->
 # KittiSeg_Pytorch
 
@@ -40,5 +40,5 @@ pip install tqdm opencv-python
 ## Train
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 1 --model ./checkpoints/model_11.pth
+CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_11.pth
 ```

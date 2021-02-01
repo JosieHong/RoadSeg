@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 15:59:44
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 01:05:29
+LastEditTime: 2021-02-01 13:44:10
 '''
 import argparse
 import os
@@ -14,10 +14,11 @@ import torch.nn.parallel
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import numpy as np
 
 from datasets.kitti_dataset import KITTI_Dataset
 from models.kitti_seg import Kitti_Seg, weight_init
-from utils import mask_iou
+from utils import mask_iou, confusion_matrix, getScores
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -26,6 +27,8 @@ parser.add_argument(
     '--workers', type=int, default=4, help='number of data loading workers')
 parser.add_argument(
     '--nepoch', type=int, default=12, help='number of epochs to train for')
+parser.add_argument(
+    '--imgSize', type=tuple, default=(256,256), help='size of input images')
 parser.add_argument('--outf', type=str, default='checkpoints', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--dataset', type=str, required=True, help="dataset path")
@@ -46,13 +49,13 @@ if opt.dataset_type == 'kitti':
         root=opt.dataset,
         mode='train',
         no_label = False, 
-        img_size=(256,256))
+        img_size=opt.imgSize)
 
     test_dataset = KITTI_Dataset(
         root=opt.dataset,
         mode='val',
         no_label = True,
-        img_size=(256,256))
+        img_size=opt.imgSize)
 else:
     exit('wrong dataset type')
 
@@ -68,7 +71,6 @@ testdataloader = DataLoader(
     shuffle=True,
     num_workers=int(opt.workers),
     drop_last=True)
-
 print('Load Dataset!\ntrain dataset:', len(dataset), 'test dataset:', len(test_dataset))
 
 try:
@@ -85,8 +87,8 @@ if opt.model != '':
     seg_model.load_state_dict(torch.load(opt.model))
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(seg_model.parameters(), lr=0.00001, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=6, gamma=0.1)
+optimizer = optim.Adam(seg_model.parameters(), lr=0.0001, betas=(0.9, 0.999))
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
 seg_model.cuda()
 
 num_batch = len(dataset) / opt.batchSize
@@ -94,6 +96,7 @@ num_batch = len(dataset) / opt.batchSize
 val_loss = [] # for debug
 for epoch in range(opt.nepoch):
     for i, data in enumerate(dataloader, 0):
+        # data format: 
         # {'rgb_image': rgb_image, 'label': label, 'path': name, 'oriSize': (oriWidth, oriHeight)}
         rgb_image = data['rgb_image']
         target = data['label']
@@ -109,7 +112,7 @@ for epoch in range(opt.nepoch):
         acc = mask_iou(pred.detach(), target.detach())
         print('[%d: %d/%d] train loss: %f accuracy: %f' % (epoch, i, num_batch, loss.item(), acc))
 
-        if i % 12 == 0:
+        if i % 10 == 0:
             j, data = next(enumerate(testdataloader, 0))
             rgb_image = data['rgb_image']
             target = data['label']
@@ -127,19 +130,20 @@ with open(os.path.join(opt.outf, "val_loss.json"), "w") as json_file:
     json.dump(val_loss, json_file)
     print("Save the validation loss in {}".format(os.path.join(opt.outf, "val_loss.json")))
 
-accuracy = 0
 results = []
-for i, data in tqdm(enumerate(testdataloader, 0)):
-    rgb_image = data['rgb_image']
-    target = data['label']
-    rgb_image, target = rgb_image.cuda(), target.cuda().float()
-    with torch.no_grad(): # save the space of GPU
+conf_mat = np.zeros(opt.imgSize, dtype=np.float)
+with torch.no_grad(): # save the space of GPU
+    for i, data in tqdm(enumerate(testdataloader, 0)):
+        rgb_image = data['rgb_image']
+        target = data['label']
+        rgb_image, target = rgb_image.cuda(), target.cuda().float()
         seg_model = seg_model.eval()
         pred = seg_model(rgb_image)
-    acc = mask_iou(pred.detach(), target.detach())
-    accuracy += acc
-    results.append({"target": target.tolist(), "pred": pred.tolist()})
-print("final accuracy {}".format(accuracy/len(testdataloader)))
+        results.append({"target": target.tolist(), "pred": pred.tolist()}) # save the results for visualization
+        conf_mat += confusion_matrix(target.cpu().numpy().astype(np.int32), pred.cpu().numpy().astype(np.int32), opt.imgSize[0])
+        
+    globalacc, pre, recall, F_score, iou = getScores(conf_mat)
+    print('Epoch {0:} glob acc : {1:.3f}, pre : {2:.3f}, recall : {3:.3f}, F_score : {4:.3f}, IoU : {5:.3f}'.format(opt.nepoch, globalacc, pre, recall, F_score, iou))
 
 with open(os.path.join(opt.outf, "test_results.json"), "w") as json_file:
     json.dump(results, json_file)

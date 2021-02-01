@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 16:11:05
 LastEditAuthor: JosieHong
-LastEditTime: 2021-01-31 20:23:18
+LastEditTime: 2021-02-01 13:08:37
 Reference: https://github.com/hlwang1124/SNE-RoadSeg/blob/master/data/kitti_dataset.py
 '''
 import os.path
@@ -25,9 +25,15 @@ class KITTI_Dataset(Base_Dataset):
         
         if self.mode == "train":
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
+            # split the training data into 'training' and 'validation'
+            length = len(self.image_list)
+            self.image_list = self.image_list[:int(length*0.9)]
         elif self.mode == "val":
             # self.image_list = sorted(glob.glob(os.path.join(self.root, 'validation', 'image_2', '*.png')))
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'training', 'image_2', '*.png')))
+            # split the training data into 'training' and 'validation'
+            length = len(self.image_list)
+            self.image_list = self.image_list[int(length*0.9):]
         else:
             self.image_list = sorted(glob.glob(os.path.join(self.root, 'testing', 'image_2', '*.png')))
 
