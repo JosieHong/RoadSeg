@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 20:36:09
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 13:44:55
+LastEditTime: 2021-02-01 16:35:46
 '''
 import torch.nn as nn
 from torchvision import models
@@ -46,13 +46,16 @@ class Fusion_Module(nn.Module):
     def __init__(self, in_channel, out_channel, t_stride=(2,2), t_kernel=4, t_padding=(1,1)):
         super(Fusion_Module, self).__init__()
         self.trans_conv = nn.ConvTranspose2d(in_channel, out_channel, stride=t_stride, kernel_size=t_kernel, padding=t_padding)
+        self.bn1 = nn.BatchNorm2d(out_channel)
+        self.relu1 = nn.ReLU(inplace=True)
+
         self.conv = nn.Conv2d(out_channel, out_channel, kernel_size=3, padding=(1,1)) # 'same' padding
-        self.bn = nn.BatchNorm2d(out_channel)
-        self.relu = nn.ReLU(inplace=True)
+        self.bn2 = nn.BatchNorm2d(out_channel)
+        self.relu2 = nn.ReLU(inplace=True)
 
     def forward(self, x1, x2):
-        x1 = self.trans_conv(x1)
-        return self.relu(self.bn(self.conv(x1 + x2)))
+        x1 = self.relu1(self.bn1(self.trans_conv(x1)))
+        return self.relu2(self.bn2(self.conv(x1 + x2)))
 
 
 class Kitti_Seg(nn.Module):
@@ -71,7 +74,7 @@ class Kitti_Seg(nn.Module):
     def forward(self, x):
         img_size = (int(x.size()[2]), int(x.size()[3]))
         # -------------------------------------
-        # Encoder (resnet101)
+        # Encoder (ResNet101)
         # 
         # output features' size:
         #   torch.Size([batch_size, 64, 64, 64]) 
@@ -90,7 +93,15 @@ class Kitti_Seg(nn.Module):
         feature5 = self.encoder.layer4(feature4)
         
         # -------------------------------------
-        # Decoder (fcn)
+        # Neck (Hall_Module)
+        # 
+        # output features' size:
+        #   torch.Size([batch_size, 2048, 8, 8])
+        # -------------------------------------
+        output = self.neck(feature5)
+        
+        # -------------------------------------
+        # Decoder (FCN)
         # 
         # output features' size:
         #   torch.Size([batch_size, 2048, 8, 8])
@@ -98,13 +109,18 @@ class Kitti_Seg(nn.Module):
         #   torch.Size([batch_size, 512, 32, 32])
         #   torch.Size([batch_size, 256, 64, 64])
         #   torch.Size([batch_size, 64, 64, 64])
-        #   torch.Size([batch_size, 1, 256, 256])
         # -------------------------------------
-        output = self.neck(feature5)
         output = self.fusion1(output, feature4)
         output = self.fusion2(output, feature3)
         output = self.fusion3(output, feature2)
         output = self.fusion4(output, feature1)
+        
+        # -------------------------------------
+        # Last layer (ajust the shape of output)
+        # 
+        # output features' size:
+        #   torch.Size([batch_size, 1, 256, 256])
+        # -------------------------------------
         output = self.trans_conv(output)
         
         return self.relu(self.bn(output)).view(-1, img_size[0], img_size[1]) # torch.Size([batch_size, 256, 256])

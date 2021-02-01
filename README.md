@@ -2,11 +2,13 @@
  * @Author: JosieHong
  * @Date: 2021-01-30 15:54:39
  * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-02-01 13:33:22
+ * @LastEditTime: 2021-02-01 14:27:12
 -->
 # KittiSeg_Pytorch
 
 This is an improved [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg) of Pytorch. 
+
+![network_structure](./img/network_structure.png)
 
 ## Set Up
 
@@ -40,5 +42,5 @@ pip install tqdm opencv-python
 ## Train
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_11.pth
+CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_23.pth
 ```

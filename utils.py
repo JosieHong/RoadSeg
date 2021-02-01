@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 23:21:03
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 11:50:47
+LastEditTime: 2021-02-01 13:49:40
 '''
 import torch
 import numpy as np
@@ -17,6 +17,7 @@ def mask_iou(mask1, mask2):
     iou_score = torch.sum(intersection) / torch.sum(union)
     return iou_score
 
+# Reference: https://github.com/hlwang1124/SNE-RoadSeg/blob/5e15ef16642b6b425c4074e025a1704312d06240/util/util.py
 def confusion_matrix(x, y, n, ignore_label=None, mask=None):
     if mask is None:
         mask = np.ones_like(x) == 1

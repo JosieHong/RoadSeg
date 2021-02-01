@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 15:59:44
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 13:44:10
+LastEditTime: 2021-02-01 14:33:58
 '''
 import argparse
 import os
@@ -87,7 +87,7 @@ if opt.model != '':
     seg_model.load_state_dict(torch.load(opt.model))
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(seg_model.parameters(), lr=0.0001, betas=(0.9, 0.999))
+optimizer = optim.Adam(seg_model.parameters(), lr=0.001, betas=(0.9, 0.999))
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
 seg_model.cuda()
 
