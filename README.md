@@ -2,9 +2,9 @@
  * @Author: JosieHong
  * @Date: 2021-01-30 15:54:39
  * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-02-01 14:27:12
+ * @LastEditTime: 2021-02-01 17:22:08
 -->
-# KittiSeg_Pytorch
+# RoadSeg_Pytorch
 
 This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). 
 
@@ -46,3 +46,5 @@ pip install tqdm opencv-python
 ```bash
 CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_23.pth
 ```
+
+Epoch 24 glob acc : 0.880, pre : 0.732, recall : 0.199, F_score : 0.313, IoU : 0.185

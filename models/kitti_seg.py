@@ -2,7 +2,7 @@
 Author: JosieHong
 Date: 2021-01-30 20:36:09
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 16:35:46
+LastEditTime: 2021-02-01 17:56:12
 '''
 import torch.nn as nn
 from torchvision import models
@@ -46,16 +46,13 @@ class Fusion_Module(nn.Module):
     def __init__(self, in_channel, out_channel, t_stride=(2,2), t_kernel=4, t_padding=(1,1)):
         super(Fusion_Module, self).__init__()
         self.trans_conv = nn.ConvTranspose2d(in_channel, out_channel, stride=t_stride, kernel_size=t_kernel, padding=t_padding)
-        self.bn1 = nn.BatchNorm2d(out_channel)
-        self.relu1 = nn.ReLU(inplace=True)
-
         self.conv = nn.Conv2d(out_channel, out_channel, kernel_size=3, padding=(1,1)) # 'same' padding
-        self.bn2 = nn.BatchNorm2d(out_channel)
-        self.relu2 = nn.ReLU(inplace=True)
+        self.bn = nn.BatchNorm2d(out_channel)
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x1, x2):
-        x1 = self.relu1(self.bn1(self.trans_conv(x1)))
-        return self.relu2(self.bn2(self.conv(x1 + x2)))
+        x1 = self.trans_conv(x1)
+        return self.relu(self.bn(self.conv(x1 + x2)))
 
 
 class Kitti_Seg(nn.Module):
