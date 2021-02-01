@@ -6,9 +6,11 @@
 -->
 # KittiSeg_Pytorch
 
-This is an improved [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg) of Pytorch. 
+This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). 
 
-![network_structure](./img/network_structure.png)
+<div align="center">
+	<img src="./img/network_structure.png" alt="network_structure" width="700">
+</div>
 
 ## Set Up
 
