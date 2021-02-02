@@ -2,7 +2,7 @@
  * @Author: JosieHong
  * @Date: 2021-01-31 13:25:12
  * @LastEditAuthor: JosieHong
- * @LastEditTime: 2021-02-02 14:51:32
+ * @LastEditTime: 2021-02-02 15:14:40
 -->
 # RoadSeg_Pytorch
 
@@ -13,9 +13,6 @@ The detailed network structure is shown in the following figure. The encoder is 
 <div align="center">
 	<img src="./img/network_structure.png" alt="network_structure" width="743.2">
 </div>
-
-
-
 
 ## Set Up
 
@@ -56,16 +53,11 @@ CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 1
 
 ## Performance
 
-Epoch 24 glob acc : 0.913, pre : 0.953, recall : 0.370, F_score : 0.533, IoU : 0.69
+Epoch 24 glob acc : 0.914, pre : 0.924, recall : 0.373, F_score : 0.531, IoU : 0.361, mIoU:  0.688
 
-Epoch 48 glob acc : 0.922, pre : 0.931, recall : 0.453, F_score : 0.610, IoU : 0.79
+Epoch 48 glob acc : 0.926, pre : 0.923, recall : 0.506, F_score : 0.654, IoU : 0.485, mIoU:  0.777
 
-Epoch 72 glob acc : 0.926, pre : 0.934, recall : 0.486, F_score : 0.639, IoU : 0.79
+Epoch 72 glob acc : 0.927, pre : 0.918, recall : 0.495, F_score : 0.643, IoU : 0.474, mIoU:  0.787
 
-Epoch 96 glob acc : 0.926, pre : 0.938, recall : 0.475, F_score : 0.631, IoU : 0.79
-
----
-
-Epoch 24 glob acc : 0.914, pre : 0.924, recall : 0.373, F_score : 0.531, IoU : 0.361
-mIoU:  0.6876237988471985
+Epoch 96 glob acc : 0.925, pre : 0.921, recall : 0.490, F_score : 0.640, IoU : 0.470, mIoU:  0.792
 
