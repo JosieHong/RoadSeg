@@ -2,16 +2,13 @@
 Author: JosieHong
 Date: 2021-01-30 20:36:09
 LastEditAuthor: JosieHong
-LastEditTime: 2021-02-01 23:46:48
+LastEditTime: 2021-02-02 14:54:49
 '''
 import torch.nn as nn
 from torchvision import models
 
 def weight_init(m):
-    if isinstance(m, nn.Linear):
-        nn.init.xavier_normal_(m.weight)
-        nn.init.constant_(m.bias, 0)
-    elif isinstance(m, nn.Conv2d):
+    if isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
     elif isinstance(m, nn.ConvTranspose2d):
         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -23,36 +20,47 @@ def weight_init(m):
 class Hall_Module(nn.Module):
     def __init__(self):
         super(Hall_Module, self).__init__()
-        self.conv1 = nn.Conv2d(2048, 2048, kernel_size=1)
-        self.bn1 = nn.BatchNorm2d(2048)
-        self.relu1 = nn.ReLU(inplace=True)
-
+        self.conv1x1 = nn.Sequential(
+            nn.Conv2d(2048, 2048, kernel_size=1),
+            nn.BatchNorm2d(2048)
+        )
+        self.relu = nn.ReLU(inplace=True) # check (relu before '+', relu after conv)
+        
         # 'same' padding = (kernel-1)/2 = (3-1)/2 = 1
-        self.conv2 = nn.Conv2d(2048, 2048, kernel_size=3, padding=(1,1)) # 'same' padding
-        self.bn2 = nn.BatchNorm2d(2048)
-        self.relu2 = nn.ReLU(inplace=True)
+        self.conv3x3_1 = nn.Sequential(
+            nn.Conv2d(2048, 2048, kernel_size=3, padding=(1,1)), # 'same' padding
+            nn.BatchNorm2d(2048)
+            # nn.ReLU(inplace=True) # check (relu before '+')
+        )
+        self.conv3x3_2 = nn.Sequential(
+            nn.Conv2d(2048, 2048, kernel_size=3, padding=(1,1)), # 'same' padding
+            nn.BatchNorm2d(2048), 
+            nn.ReLU(inplace=True)
+        )
         
-        self.conv3 = nn.Conv2d(2048, 2048, kernel_size=3, padding=(1,1)) # 'same' padding
-        self.bn3 = nn.BatchNorm2d(2048)
-        self.relu3 = nn.ReLU(inplace=True)
-        
-    def forward(self, x):
-        x1 = self.relu1(self.bn1(self.conv1(x)))
-        x2 = self.relu2(self.bn2(self.conv2(x1)))
-        return self.relu3(self.bn3(self.conv3(x1 + x2)))
+    def forward(self, x): 
+        x1 = self.conv1x1(x)
+        x2 = self.conv3x3_1(self.relu(x1))
+        return self.conv3x3_2(x1 + x2) # self.conv3x3_2(nn.ReLU(inplace=True)(x1 + x2)) # check
 
 
 class Fusion_Module(nn.Module): 
     def __init__(self, in_channel, out_channel, t_stride=(2,2), t_kernel=4, t_padding=(1,1)):
         super(Fusion_Module, self).__init__()
-        self.trans_conv = nn.ConvTranspose2d(in_channel, out_channel, stride=t_stride, kernel_size=t_kernel, padding=t_padding)
-        self.conv = nn.Conv2d(out_channel, out_channel, kernel_size=3, padding=(1,1)) # 'same' padding
-        self.bn = nn.BatchNorm2d(out_channel)
-        self.relu = nn.ReLU(inplace=True)
+        self.conv_transpose = nn.Sequential(
+            nn.ConvTranspose2d(in_channel, out_channel, stride=t_stride, kernel_size=t_kernel, padding=t_padding),
+            nn.BatchNorm2d(out_channel)
+            # nn.ReLU(inplace=True) # check (relu before '+', relu after 'convTranspose')
+        )
+        self.conv = nn.Sequential(
+            nn.Conv2d(out_channel, out_channel, kernel_size=3, padding=(1,1)), # 'same' padding
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True)
+        )
 
-    def forward(self, x1, x2):
-        x1 = self.trans_conv(x1)
-        return self.relu(self.bn(self.conv(x1 + x2)))
+    def forward(self, x1, x2): 
+        x1 = self.conv_transpose(x1)
+        return self.conv(x1 + x2) # self.conv(nn.ReLU(inplace=True)(x1 + x2)) # check
 
 
 class Kitti_Seg(nn.Module):
@@ -64,9 +72,12 @@ class Kitti_Seg(nn.Module):
         self.fusion2 = Fusion_Module(1024, 512)
         self.fusion3 = Fusion_Module(512, 256)
         self.fusion4 = Fusion_Module(256, 64, t_stride=(1,1), t_kernel=3, t_padding=(1,1))
-        self.trans_conv = nn.ConvTranspose2d(64, 1, stride=(4,4), kernel_size=16, padding=(6,6)) # Yuhui: not sure about the parameter of this layer
-        self.bn = nn.BatchNorm2d(1)
-        self.relu = nn.ReLU(inplace=True)
+        self.conv_transpose = nn.Sequential(
+            # Yuhui: not sure about the parameter of this layer
+            nn.ConvTranspose2d(64, 1, stride=(4,4), kernel_size=16, padding=(6,6)), 
+            nn.BatchNorm2d(1), 
+            nn.ReLU(inplace=True)
+        )
         
     def forward(self, x):
         img_size = (int(x.size()[2]), int(x.size()[3]))
@@ -118,6 +129,6 @@ class Kitti_Seg(nn.Module):
         # output features' size:
         #   torch.Size([batch_size, 1, 256, 256])
         # -------------------------------------
-        output = self.trans_conv(output)
+        output = self.conv_transpose(output)
         
-        return self.relu(self.bn(output)).view(-1, img_size[0], img_size[1]) # torch.Size([batch_size, 256, 256])
+        return output.view(-1, img_size[0], img_size[1]) # torch.Size([batch_size, 256, 256])

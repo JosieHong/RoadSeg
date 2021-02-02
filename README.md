@@ -1,10 +1,20 @@
+<!--
+ * @Author: JosieHong
+ * @Date: 2021-01-31 13:25:12
+ * @LastEditAuthor: JosieHong
+ * @LastEditTime: 2021-02-02 14:51:32
+-->
 # RoadSeg_Pytorch
 
-This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). The detailed network structure is shown in the following figure. 
+This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). 
+
+The detailed network structure is shown in the following figure. The encoder is the ResNet50/101 provided by [Torchvision](https://pytorch.org/docs/stable/torchvision/models.html), so the details are not marked here. 
 
 <div align="center">
-	<img src="./img/network_structure.png" alt="network_structure" width="800">
+	<img src="./img/network_structure.png" alt="network_structure" width="743.2">
 </div>
+
+
 
 
 ## Set Up
@@ -53,3 +63,9 @@ Epoch 48 glob acc : 0.922, pre : 0.931, recall : 0.453, F_score : 0.610, IoU : 0
 Epoch 72 glob acc : 0.926, pre : 0.934, recall : 0.486, F_score : 0.639, IoU : 0.79
 
 Epoch 96 glob acc : 0.926, pre : 0.938, recall : 0.475, F_score : 0.631, IoU : 0.79
+
+---
+
+Epoch 24 glob acc : 0.914, pre : 0.924, recall : 0.373, F_score : 0.531, IoU : 0.361
+mIoU:  0.6876237988471985
+
