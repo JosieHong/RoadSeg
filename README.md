@@ -61,27 +61,23 @@ The dataset structure is shown below. Because it does not provide the ground-tru
 
 ```bash
 # KITTI
-CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 4 --nepoch 24 --outf ./checkpoints/kitti --model ./checkpoints/kitti/model_23.pth
+python train.py --dataset ./data/data_road/ --batchSize 1 --nepoch 24 --imgSize 512 512 --outf ./checkpoints/kitti
 # (A tricky way to test)
 python train.py --dataset ./data/data_road/ --batchSize 4 --nepoch 0 --outf ./checkpoints/kitti --model ./checkpoints/kitti/save_weighted.pth
 
 # TSD-max
-python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 24 --imgSize 512 512 --outf ./checkpoints/tsd
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 2 --nepoch 24 --imgSize 256 256 --outf ./checkpoints/tsd_256 --model ./checkpoints/tsd_256/model_23.pth
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 24 --imgSize 512 512 --outf ./checkpoints/tsd_512
 # (A tricky way to test)
-python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 0 --imgSize 512 512 --outf ./checkpoints/tsd --model ./checkpoints/tsd/save_weighted.pth
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 2 --nepoch 0 --imgSize 256 256 --outf ./checkpoints/tsd_256 --model ./checkpoints/tsd_256/save_weighted.pth
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 0 --imgSize 512 512 --outf ./checkpoints/tsd_512 --model ./checkpoints/tsd_512/save_weighted.pth
 ```
 
 ## Performance
 
-KITTI: (the size of input image is 256x256)
-
-```
-Epoch 24, mIoU: 0.726
-Epoch 48,  mIoU: 0.752
-```
-
-TSD-max: (the size of input image is 512x512)
-
-```
-Epoch 24, mIoU: 0.973
-```
+| dataset | input image size | training epoch | mIoU  |
+| ------- | ---------------- | -------------- | ----- |
+| KITTI   | 256 x 256        | 48             | 0.752 |
+| KITTI   | 512 x 512        | 24             | 0.827 |
+| TSD-max | 256 x 256        | 48             | 0.870 |
+| TSD-max | 512 x 512        | 24             | 0.973 |
