@@ -26,6 +26,8 @@ source enb/bin/activate
 pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 # more details could be found: https://pytorch.org/get-started/locally/
 
+# If torch<1.5.0, you may need to install for logical calculation on GPU
+
 pip install tqdm opencv-python
 ```
 
@@ -61,3 +63,10 @@ Epoch 72 glob acc : 0.927, pre : 0.918, recall : 0.495, F_score : 0.643, IoU : 0
 
 Epoch 96 glob acc : 0.925, pre : 0.921, recall : 0.490, F_score : 0.640, IoU : 0.470, mIoU:  0.792
 
+## TSD-max Dataset
+
+```bash
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 4 --nepoch 24 --imgSize (256,256)
+
+
+```

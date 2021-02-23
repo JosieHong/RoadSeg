@@ -17,6 +17,7 @@ from tqdm import tqdm
 import numpy as np
 
 from datasets.kitti_dataset import KITTI_Dataset
+from datasets.tsd_max_dataset import TSD_Dataset
 from models.kitti_seg import Kitti_Seg, weight_init
 from utils import mask_iou, confusion_matrix, getScores # need to be checkout
 
@@ -32,7 +33,7 @@ parser.add_argument(
 parser.add_argument('--outf', type=str, default='checkpoints', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--dataset', type=str, required=True, help="dataset path")
-parser.add_argument('--dataset_type', type=str, default='kitti', help="dataset type")
+parser.add_argument('--dataset_type', type=str, default='kitti', help="dataset type [kitti/tsd]")
 
 opt = parser.parse_args()
 print(opt)
@@ -56,6 +57,22 @@ if opt.dataset_type == 'kitti':
         no_label = False, 
         img_size=opt.imgSize)
     test_dataset = KITTI_Dataset(
+        root=opt.dataset,
+        mode='val',
+        no_label = False,
+        img_size=opt.imgSize)
+elif opt.dataset_type == "tsd":
+    dataset = TSD_Dataset(
+        root=opt.dataset,
+        mode='train',
+        no_label = False, 
+        img_size=opt.imgSize)
+    val_dataset = TSD_Dataset(
+        root=opt.dataset,
+        mode='val',
+        no_label = False, 
+        img_size=opt.imgSize)
+    test_dataset = TSD_Dataset(
         root=opt.dataset,
         mode='val',
         no_label = False,
