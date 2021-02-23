@@ -52,7 +52,7 @@ class KITTI_Dataset(Base_Dataset):
         else:
             label_image = cv2.cvtColor(cv2.imread(os.path.join(useDir, 'gt_image_2', name[:-10]+'road_'+name[-10:])), cv2.COLOR_BGR2RGB)
             label = np.zeros((oriHeight, oriWidth), dtype=np.uint8)
-            label[label_image[:,:,2] > 0] = 1
+            label[label_image[:,:,2] > 0] = 1 # masks are on channel 2
 
         # resize image to enable sizes divide 32
         rgb_image = cv2.resize(rgb_image, self.use_size)

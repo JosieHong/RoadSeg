@@ -6,21 +6,24 @@ LastEditTime: 2021-02-01 13:49:40
 '''
 import torch
 import numpy as np
-import cupy as cp
 
 def mask_iou(mask1, mask2):
     """
     masks1: [b, w, h]
     masks2: [b, w, h]
     """
-    # If = torch >= 1.5.0
+    # If torch >= 1.5.0
     # intersection = torch.logical_and(mask1, mask2)
     # union = torch.logical_or(mask1, mask2)
-    
+    # iou_score = torch.sum(intersection) / torch.sum(union)
+
     # If torch < 1.5.0
-    intersection = cp.logical_and(mask1, mask2)
-    union = cp.logical_or(mask1, mask2)
-    iou_score = torch.sum(intersection) / torch.sum(union)
+    mask1 = mask1.cpu().numpy()
+    mask2 = mask2.cpu().numpy()
+    intersection = np.logical_and(mask1, mask2)
+    union = np.logical_or(mask1, mask2)
+    iou_score = np.sum(intersection) / np.sum(union)
+
     return iou_score
 
 # Reference: https://github.com/hlwang1124/SNE-RoadSeg/blob/5e15ef16642b6b425c4074e025a1704312d06240/util/util.py

@@ -47,26 +47,41 @@ The dataset structure is shown below. Because it does not provide the ground-tru
             |_image_2
 ```
 
+3. TSD-max Dataset:
+
+```
+|_data
+    |_train_lst.txt
+    |_test_lst.txt
+    |_sequence_1 (rgb images and labels)
+    |_....
+```
+
 ## Train
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 12 --nepoch 24 --model ./checkpoints/model_23.pth
+# KITTI
+CUDA_VISIBLE_DEVICES=1 python train.py --dataset ./data/data_road/ --batchSize 4 --nepoch 24 --outf ./checkpoints/kitti --model ./checkpoints/kitti/model_23.pth
+# (A tricky way to test)
+python train.py --dataset ./data/data_road/ --batchSize 4 --nepoch 0 --outf ./checkpoints/kitti --model ./checkpoints/kitti/save_weighted.pth
+
+# TSD-max
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 24 --imgSize 512 512 --outf ./checkpoints/tsd
+# (A tricky way to test)
+python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 1 --nepoch 0 --imgSize 512 512 --outf ./checkpoints/tsd --model ./checkpoints/tsd/save_weighted.pth
 ```
 
 ## Performance
 
-Epoch 24 glob acc : 0.914, pre : 0.924, recall : 0.373, F_score : 0.531, IoU : 0.361, mIoU:  0.688
+KITTI: (the size of input image is 256x256)
 
-Epoch 48 glob acc : 0.926, pre : 0.923, recall : 0.506, F_score : 0.654, IoU : 0.485, mIoU:  0.777
+```
+Epoch 24, mIoU: 0.726
+Epoch 48,  mIoU: 0.752
+```
 
-Epoch 72 glob acc : 0.927, pre : 0.918, recall : 0.495, F_score : 0.643, IoU : 0.474, mIoU:  0.787
+TSD-max: (the size of input image is 512x512)
 
-Epoch 96 glob acc : 0.925, pre : 0.921, recall : 0.490, F_score : 0.640, IoU : 0.470, mIoU:  0.792
-
-## TSD-max Dataset
-
-```bash
-python train.py --dataset_type tsd --dataset ./data/tsd-max-traffic/ --batchSize 4 --nepoch 24 --imgSize (256,256)
-
-
+```
+Epoch 24, mIoU: 0.973
 ```

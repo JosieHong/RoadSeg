@@ -63,9 +63,9 @@ class Fusion_Module(nn.Module):
         return self.conv(x1 + x2) # self.conv(nn.ReLU(inplace=True)(x1 + x2)) # check
 
 
-class Kitti_Seg(nn.Module):
+class Road_Seg(nn.Module):
     def __init__(self):
-        super(Kitti_Seg, self).__init__()
+        super(Road_Seg, self).__init__()
         self.encoder = models.resnet101(pretrained=True)
         self.neck = Hall_Module()
         self.fusion1 = Fusion_Module(2048, 1024)

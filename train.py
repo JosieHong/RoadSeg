@@ -18,7 +18,7 @@ import numpy as np
 
 from datasets.kitti_dataset import KITTI_Dataset
 from datasets.tsd_max_dataset import TSD_Dataset
-from models.kitti_seg import Kitti_Seg, weight_init
+from models.road_seg import Road_Seg, weight_init
 from utils import mask_iou, confusion_matrix, getScores # need to be checkout
 
 parser = argparse.ArgumentParser()
@@ -29,7 +29,7 @@ parser.add_argument(
 parser.add_argument(
     '--nepoch', type=int, default=12, help='number of epochs to train for')
 parser.add_argument(
-    '--imgSize', type=tuple, default=(256,256), help='size of input images')
+    '--imgSize', nargs='+', type=int, default=[256, 256], help='size of input images')
 parser.add_argument('--outf', type=str, default='checkpoints', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--dataset', type=str, required=True, help="dataset path")
@@ -74,7 +74,7 @@ elif opt.dataset_type == "tsd":
         img_size=opt.imgSize)
     test_dataset = TSD_Dataset(
         root=opt.dataset,
-        mode='val',
+        mode='test',
         no_label = False,
         img_size=opt.imgSize)
 else:
@@ -105,7 +105,7 @@ try:
 except OSError:
     pass
 
-seg_model = Kitti_Seg()
+seg_model = Road_Seg()
 # seg_model.apply(weight_init)
 print("Build the model!")
 
@@ -159,6 +159,7 @@ with open(os.path.join(opt.outf, "val_loss.json"), "w") as json_file:
 
 results = []
 mIoU = 0
+# need to check the score metrics in `utils.py`
 # conf_mat = np.zeros(opt.imgSize, dtype=np.float)
 with torch.no_grad(): # save the space of GPU
     for i, data in tqdm(enumerate(testdataloader, 0)):
