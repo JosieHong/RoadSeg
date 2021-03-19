@@ -4,9 +4,9 @@
  * @LastEditAuthor: JosieHong
  * @LastEditTime: 2021-02-02 15:14:40
 -->
-# RoadSeg_Pytorch
+# RoadSeg
 
-This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). 
+This is a road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg). It has been tested on the KITTI dataset (public) and the TSD-max dataset (custom). 
 
 The detailed network structure is shown in the following figure. The encoder is the ResNet50/101 provided by [Torchvision](https://pytorch.org/docs/stable/torchvision/models.html), so the details are not marked here. 
 
@@ -46,6 +46,8 @@ The dataset structure is shown below. Because it does not provide the ground-tru
 ```
 
 3. TSD-max Dataset:
+
+TSD-max Dataset is constructed by the Institute of Artificial Intelligence and Robotics, Xi’an Jiaotong University. There are 979 training images and 244 test images are labeled manually. 
 
 ```
 |_data
