@@ -9,20 +9,25 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 
-from eval import eval_net
-from unet import UNet
+from utils.eval import eval_net, test_net
+from utils.dataset import TSDDataset_bin, TSDDataset_mul
+from models.unet_model import UNet
+from models.gcn_model import FCN_GCN
+from models.our_model import Road_Seg
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
 
-dir_img = 'data/imgs/'
-dir_mask = 'data/masks/'
+dir_root = 'data/xjtu_plus/'
+# dir_img = 'data/xjtu_plus/img/'
+# dir_mask = 'data/xjtu_plus/label/'
+dir_list = 'data/xjtu_plus/train_lst.txt'
+dir_list_test = 'data/xjtu_plus/test_lst.txt'
 dir_checkpoint = 'checkpoints/'
-
 
 def train_net(net,
               device,
+              dataset='TSDDataset_bin',
               epochs=5,
               batch_size=1,
               lr=0.001,
@@ -30,7 +35,10 @@ def train_net(net,
               save_cp=True,
               img_scale=0.5):
 
-    dataset = BasicDataset(dir_img, dir_mask, img_scale)
+    if dataset == 'TSDDataset_bin':
+        dataset = TSDDataset_bin(dir_root, dir_list, img_scale)
+    elif dataset == 'TSDDataset_mul': 
+        dataset = TSDDataset_mul(dir_root, dir_list, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -53,8 +61,15 @@ def train_net(net,
 
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
+    # get the class probabilities
     if net.n_classes > 1:
-        criterion = nn.CrossEntropyLoss()
+        # print("classes_prob:", dataset.classes_prob)
+        # print("img_size:", dataset.img_size)
+        # print("class_num:", len(dataset.classes))
+        weights = torch.zeros((len(dataset.classes), dataset.img_size[0], dataset.img_size[1])).to(device)
+        for i in range(len(dataset.classes)):
+            weights[i] = torch.full(dataset.img_size, 1/dataset.classes_prob[i])
+        criterion = nn.BCEWithLogitsLoss(weight=weights)
     else:
         criterion = nn.BCEWithLogitsLoss()
 
@@ -72,8 +87,7 @@ def train_net(net,
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 if net.n_classes == 1 else torch.long
-                true_masks = true_masks.to(device=device, dtype=mask_type)
+                true_masks = true_masks.to(device=device, dtype=torch.float32)
 
                 masks_pred = net(imgs)
                 loss = criterion(masks_pred, true_masks)
@@ -93,7 +107,7 @@ def train_net(net,
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                        writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
+                        # writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device)
                     scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
@@ -105,19 +119,14 @@ def train_net(net,
                         logging.info('Validation Dice Coeff: {}'.format(val_score))
                         writer.add_scalar('Dice/test', val_score, global_step)
 
-                    writer.add_images('images', imgs, global_step)
-                    if net.n_classes == 1:
-                        writer.add_images('masks/true', true_masks, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
-
         if save_cp:
             try:
-                os.mkdir(dir_checkpoint)
+                os.mkdir(os.path.join(dir_checkpoint, args.model))
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
             torch.save(net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                       dir_checkpoint +args.model+'/'+ f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
@@ -126,6 +135,10 @@ def train_net(net,
 def get_args():
     parser = argparse.ArgumentParser(description='Train the UNet on images and target masks',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-d', '--dataset', dest='dataset', type=str, default='TSDDataset_bin',
+                        help='Dataset type: [TSDDataset_bin/TSDDataset_mul]')
+    parser.add_argument('-m', '--model', dest='model', type=str, default='unet',
+                        help='Model type: [unet/gcn/ours]')
     parser.add_argument('-e', '--epochs', metavar='E', type=int, default=5,
                         help='Number of epochs', dest='epochs')
     parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=1,
@@ -154,11 +167,33 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=1, bilinear=True)
+    if args.model == 'unet':
+        if args.dataset == 'TSDDataset_bin':
+            net = UNet(n_channels=3, n_classes=1, bilinear=True)
+        elif args.dataset == 'TSDDataset_mul':
+            net = UNet(n_channels=3, n_classes=3, bilinear=True)
+        
+    elif args.model == 'gcn':
+        if args.dataset == 'TSDDataset_bin':
+            net = FCN_GCN(n_channels=3, n_classes=1, bilinear=True)
+        elif args.dataset == 'TSDDataset_mul':
+            net = FCN_GCN(n_channels=3, n_classes=3, bilinear=True)
+
+    elif args.model == 'ours':
+        if args.dataset == 'TSDDataset_bin':
+            net = Road_Seg(n_channels=3, n_classes=1, bilinear=True)
+        elif args.dataset == 'TSDDataset_mul':
+            net = Road_Seg(n_channels=3, n_classes=3, bilinear=True)
+
+    else:
+        print("Error: {} is not supported, please chooes a model in [unet/gcn]".format(args.model))
+        exit()
+
     logging.info(f'Network:\n'
-                 f'\t{net.n_channels} input channels\n'
-                 f'\t{net.n_classes} output channels (classes)\n'
-                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+                f'\t{net.n_channels} input channels\n'
+                f'\t{net.n_classes} output channels (classes)\n'
+                f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+
 
     if args.load:
         net.load_state_dict(
@@ -172,12 +207,30 @@ if __name__ == '__main__':
 
     try:
         train_net(net=net,
-                  epochs=args.epochs,
-                  batch_size=args.batchsize,
-                  lr=args.lr,
-                  device=device,
-                  img_scale=args.scale,
-                  val_percent=args.val / 100)
+                    dataset=args.dataset,
+                    epochs=args.epochs,
+                    batch_size=args.batchsize,
+                    lr=args.lr,
+                    device=device,
+                    img_scale=args.scale,
+                    val_percent=args.val / 100)
+    except KeyboardInterrupt:
+        torch.save(net.state_dict(), 'INTERRUPTED.pth')
+        logging.info('Saved interrupt')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+
+    try:
+        if args.dataset == 'TSDDataset_bin':
+            dataset = TSDDataset_bin(dir_root, dir_list_test, args.scale)
+        elif args.dataset == 'TSDDataset_mul':
+            dataset = TSDDataset_mul(dir_root, dir_list_test, args.scale)
+        test_loader = DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
+        metrics = test_net(net, loader=test_loader, device=device)
+        for k, v in metrics.items():
+            print("{}: {}".format(k, v))
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')

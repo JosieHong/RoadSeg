@@ -1,115 +1,93 @@
-# UNet: semantic segmentation with PyTorch
+# Road_Seg
 
-[![xscode](https://img.shields.io/badge/Available%20on-xs%3Acode-blue?style=?style=plastic&logo=appveyor&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAAZQTFRF////////VXz1bAAAAAJ0Uk5T/wDltzBKAAAAlUlEQVR42uzXSwqAMAwE0Mn9L+3Ggtgkk35QwcnSJo9S+yGwM9DCooCbgn4YrJ4CIPUcQF7/XSBbx2TEz4sAZ2q1RAECBAiYBlCtvwN+KiYAlG7UDGj59MViT9hOwEqAhYCtAsUZvL6I6W8c2wcbd+LIWSCHSTeSAAECngN4xxIDSK9f4B9t377Wd7H5Nt7/Xz8eAgwAvesLRjYYPuUAAAAASUVORK5CYII=)](https://xscode.com/milesial/Pytorch-UNet)
+[Neurocomputing] This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg), which is the part of the experiments of our paper, [Geometric and semantic analysis of road image sequences for traffic scene construction](https://www.sciencedirect.com/science/article/pii/S0925231221013564). 
 
+The detailed network structure is shown in the following figure. The encoder is the ResNet50/101 provided by [Torchvision](https://pytorch.org/docs/stable/torchvision/models.html), so the details are not marked here. 
 
-![input and output for a random image in the test dataset](https://i.imgur.com/GD8FcB7.png)
+<div align="center">
+	<img src="./img/network_structure.png" alt="network_structure" width="743.2">
+</div>
 
+## Performance
 
-Customized implementation of the [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch for Kaggle's [Carvana Image Masking Challenge](https://www.kaggle.com/c/carvana-image-masking-challenge) from high definition images.
+**1. binary class segmentation**
 
-This model was trained from scratch with 5000 images (no data augmentation) and scored a [dice coefficient](https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient) of 0.988423 (511 out of 735) on over 100k test images. This score could be improved with more training, data augmentation, fine tuning, playing with CRF post-processing, and applying more weights on the edges of the masks.
+|       | Bg Acc     | Road Acc   | Bg IoU     | Road IoU   |
+| ----- | ---------- | ---------- | ---------- | ---------- |
+| U-Net | 98.114     | 97.941     | 96.368     | 96.424     |
+| GCN   | 98.654     | **98.921** | **97.661** | **97.842** |
+| Ours  | **98.663** | 98.657     | 97.402     | 97.531     |
 
-The Carvana data is available on the [Kaggle website](https://www.kaggle.com/c/carvana-image-masking-challenge/data).
+**2. semantic segmentation**
 
-## Usage
-**Note : Use Python 3.6 or newer**
-### Prediction
+|       | Road IoU | Road Acc | Car IoU | Car Acc | Others IoU | Others Acc |
+| ----- | -------- | -------- | ------- | ------- | ---------- | ---------- |
+| U-Net | 96.478   | 98.288   | 0       | 0       | 0          | 0          |
+| GCN   | 97.606   | 98.926   | 23.156  | 26.970  | 0.398      | 0.413      |
+| Ours  | 96.869   | 98.267   | 00.022  | 00.024  | 0          | 0          |
 
-After training your model and saving it to MODEL.pth, you can easily test the output masks on your images via the CLI.
-
-To predict a single image and save it:
-
-`python predict.py -i image.jpg -o output.jpg`
-
-To predict a multiple images and show them without saving them:
-
-`python predict.py -i image1.jpg image2.jpg --viz --no-save`
-
-```shell script
-> python predict.py -h
-usage: predict.py [-h] [--model FILE] --input INPUT [INPUT ...]
-                  [--output INPUT [INPUT ...]] [--viz] [--no-save]
-                  [--mask-threshold MASK_THRESHOLD] [--scale SCALE]
-
-Predict masks from input images
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --model FILE, -m FILE
-                        Specify the file in which the model is stored
-                        (default: MODEL.pth)
-  --input INPUT [INPUT ...], -i INPUT [INPUT ...]
-                        filenames of input images (default: None)
-  --output INPUT [INPUT ...], -o INPUT [INPUT ...]
-                        Filenames of ouput images (default: None)
-  --viz, -v             Visualize the images as they are processed (default:
-                        False)
-  --no-save, -n         Do not save the output masks (default: False)
-  --mask-threshold MASK_THRESHOLD, -t MASK_THRESHOLD
-                        Minimum probability value to consider a mask pixel
-                        white (default: 0.5)
-  --scale SCALE, -s SCALE
-                        Scale factor for the input images (default: 0.5)
-```
-You can specify which model file to use with `--model MODEL.pth`.
-
-### Training
-
-```shell script
-> python train.py -h
-usage: train.py [-h] [-e E] [-b [B]] [-l [LR]] [-f LOAD] [-s SCALE] [-v VAL]
-
-Train the UNet on images and target masks
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -e E, --epochs E      Number of epochs (default: 5)
-  -b [B], --batch-size [B]
-                        Batch size (default: 1)
-  -l [LR], --learning-rate [LR]
-                        Learning rate (default: 0.1)
-  -f LOAD, --load LOAD  Load model from a .pth file (default: False)
-  -s SCALE, --scale SCALE
-                        Downscaling factor of the images (default: 0.5)
-  -v VAL, --validation VAL
-                        Percent of the data that is used as validation (0-100)
-                        (default: 15.0)
+## Set up
 
 ```
-By default, the `scale` is 0.5, so if you wish to obtain better results (but use more memory), set it to 1.
-
-The input images and target masks should be in the `data/imgs` and `data/masks` folders respectively.
-
-### Pretrained model
-A [pretrained model](https://github.com/milesial/Pytorch-UNet/releases/tag/v1.0) is available for the Carvana dataset. It can also be loaded from torch.hub:
-
-```python
-net = torch.hub.load('milesial/Pytorch-UNet', 'unet_carvana')
+virtuelenv env
+source env/bin/activate
+pip install -r requirements.txt
 ```
-The training was done with a 100% scale and bilinear upsampling.
 
-## Tensorboard
-You can visualize in real time the train and test losses, the weights and gradients, along with the model predictions with tensorboard:
+## U-Net
 
-`tensorboard --logdir=runs`
+Reference: https://github.com/milesial/Pytorch-UNet
 
-You can find a reference training run with the Caravana dataset on [TensorBoard.dev](https://tensorboard.dev/experiment/1m1Ql50MSJixCbG1m9EcDQ/#scalars&_smoothingWeight=0.6) (only scalars are shown currently).
+```bash
+# train&test
+python run.py --model unet --dataset TSDDataset_bin --epochs 5
+# test
+python run.py --model unet --dataset TSDDataset_bin --epochs 0 --load checkpoints/unet/MODEL_bin.pth
+# visualization
+python predict.py --model unet --dataset TSDDataset_bin --load checkpoints/unet/MODEL_bin.pth
 
-## Notes on memory
+# train&test
+python run.py --model unet --dataset TSDDataset_mul --epochs 5
+# test
+python run.py --model unet --dataset TSDDataset_mul --epochs 0 --load checkpoints/unet/MODEL_mul.pth
+# visualization
+python predict.py --model unet --dataset TSDDataset_mul --load checkpoints/unet/MODEL_mul.pth
+```
 
-The model has be trained from scratch on a GTX970M 3GB.
-Predicting images of 1918*1280 takes 1.5GB of memory.
-Training takes much approximately 3GB, so if you are a few MB shy of memory, consider turning off all graphical displays.
-This assumes you use bilinear up-sampling, and not transposed convolution in the model.
+## GCN
 
-## Support
+Reference: https://github.com/SConsul/Global_Convolutional_Network
 
-Personalized support for issues with this repository, or integrating with your own dataset, available on [xs:code](https://xscode.com/milesial/Pytorch-UNet).
+```bash
+# train&test
+python run.py --model gcn --dataset TSDDataset_bin --epochs 5
+# test
+python run.py --model gcn --dataset TSDDataset_bin --epochs 0 --load checkpoints/gcn/MODEL_bin.pth
+# visualization
+python predict.py --model gcn --dataset TSDDataset_bin --load checkpoints/gcn/MODEL_bin.pth
 
+# train&test
+python run.py --model gcn --dataset TSDDataset_mul --epochs 5
+# test
+python run.py --model gcn --dataset TSDDataset_mul --epochs 0 --load checkpoints/gcn/MODEL_mul.pth
+# visualization
+python predict.py --model gcn --dataset TSDDataset_mul --load checkpoints/gcn/MODEL_mul.pth
+```
 
----
+## Ours
 
-Original paper by Olaf Ronneberger, Philipp Fischer, Thomas Brox: [https://arxiv.org/abs/1505.04597](https://arxiv.org/abs/1505.04597)
+```bash
+# train&test
+python run.py --model ours --dataset TSDDataset_bin --epochs 5
+# test
+python run.py --model ours --dataset TSDDataset_bin --epochs 0 --load checkpoints/ours/MODEL_bin.pth
+# visualization
+python predict.py --model ours --dataset TSDDataset_bin --load checkpoints/ours/MODEL_bin.pth
 
-![network architecture](https://i.imgur.com/jeDVpqF.png)
+# train&test
+python run.py --model ours --dataset TSDDataset_mul --epochs 3
+# test
+python run.py --model ours --dataset TSDDataset_mul --epochs 0 --load checkpoints/ours/MODEL_mul.pth
+# visualization
+python predict.py --model ours --dataset TSDDataset_mul --load checkpoints/ours/MODEL_mul.pth
+```

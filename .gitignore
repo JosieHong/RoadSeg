@@ -2,7 +2,12 @@
 data/
 __pycache__/
 checkpoints/
+data/
+env/
+vis/
+
 *.pth
 *.jpg
-SUBMISSION*
-venv/
+*.pdf
+*.bak
+*.out
