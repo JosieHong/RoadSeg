@@ -1,6 +1,6 @@
 # Road_Seg
 
-[Neurocomputing] This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg), which is the part of the experiments of our paper, [Geometric and semantic analysis of road image sequences for traffic scene construction](https://www.sciencedirect.com/science/article/pii/S0925231221013564). 
+This is an road segmentation network of Pytorch, which is inspired by [KittiSeg](https://github.com/MarvinTeichmann/KittiSeg), which is the part of the experiments of our paper, [Geometric and semantic analysis of road image sequences for traffic scene construction](https://www.sciencedirect.com/science/article/pii/S0925231221013564). 
 
 The detailed network structure is shown in the following figure. The encoder is the ResNet50/101 provided by [Torchvision](https://pytorch.org/docs/stable/torchvision/models.html), so the details are not marked here. 
 
